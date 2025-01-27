@@ -4,7 +4,7 @@ const path = require("path");
 // Function to get changed files in the PR
 async function getChangedFiles() {
   const { execSync } = require("child_process");
-  const output = execSync("git diff --name-only HEAD^ HEAD").toString();
+  const output = execSync("git diff --name-only HEAD~1").toString(); // More reliable way to get previous commit
   return output.split("\n").filter(file => file.endsWith(".js"));
 }
 

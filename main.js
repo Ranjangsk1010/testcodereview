@@ -1,5 +1,5 @@
 // Simple JavaScript Hello World Program
-function sayHello() {
+function ranjantest() {
     console.log("Hello, World! 🚀");
 }
 

@@ -10,6 +10,8 @@ jobs:
     steps:
       - name: Checkout Repository
         uses: actions/checkout@v3
+        with:
+          fetch-depth: 2
       
       - name: Run JavaScript Linter
         run: node .github/scripts/checkFunctionNames.js

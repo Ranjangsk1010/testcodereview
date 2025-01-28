@@ -1,40 +1,48 @@
 const fs = require("fs");
-const path = require("path");
+const { execSync } = require("child_process");
 
-// Function to get changed files in the PR
-async function getChangedFiles() {
-  const { execSync } = require("child_process");
-  const output = execSync("git diff --name-only HEAD~1").toString(); // More reliable way to get previous commit
+function getChangedFiles() {
+  const output = execSync("git diff --name-only HEAD~1").toString();
   return output.split("\n").filter(file => file.endsWith(".js"));
 }
 
-// Function to check for function names starting with "ranjan"
-function containsForbiddenFunction(filePath) {
+// Function to check for function names starting with "ranjan" and return line numbers
+function findForbiddenFunctions(filePath) {
   const code = fs.readFileSync(filePath, "utf8");
+  const lines = code.split("\n");
+  let issues = [];
+
   const regex = /\bfunction\s+ranjan\w*\s*\(/g;  // Matches function ranjanSomething()
-  return regex.test(code);
+
+  lines.forEach((line, index) => {
+    if (regex.test(line)) {
+      issues.push({
+        file: filePath,
+        line: index + 1,  // Line numbers start from 1
+        message: `🚨 **Forbidden function name found**: Please remove "ranjan" from function names.`,
+      });
+    }
+  });
+
+  return issues;
 }
 
-async function main() {
-  const changedFiles = await getChangedFiles();
-  let foundIssue = false;
+function main() {
+  const changedFiles = getChangedFiles();
+  let allIssues = [];
 
   for (const file of changedFiles) {
-    if (containsForbiddenFunction(file)) {
-      console.log(`❌ Issue found in ${file}`);
-      foundIssue = true;
-    }
+    const issues = findForbiddenFunctions(file);
+    allIssues = allIssues.concat(issues);
   }
 
-  if (foundIssue) {
-    console.log("::set-output name=needs_comment::true"); // Used by GitHub Actions
-    process.exit(1);  // Fail the step so the workflow knows there's an issue
+  if (allIssues.length > 0) {
+    fs.writeFileSync("comment_output.json", JSON.stringify(allIssues, null, 2)); // ✅ Save JSON file
+    console.log("Issues detected. Stored in comment_output.json");
+    process.exit(1);  // Exit with an error code to fail the job
   } else {
     console.log("✅ No issues found.");
   }
 }
 
-main().catch(err => {
-  console.error(err);
-  process.exit(1);
-});
+main();

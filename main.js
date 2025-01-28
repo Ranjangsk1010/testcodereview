@@ -1,6 +1,6 @@
 // Simple JavaScript Hello World Program
 function ranjan() {
-    console.log("Hello, World! 🚀");
+    console.log("ranjan, World! 🚀");
 }
 
 // Call the function
